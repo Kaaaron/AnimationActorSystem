@@ -1,0 +1,24 @@
+﻿{
+	"FileVersion": 3,
+	"Version": 2,
+	"VersionName": "2.0",
+	"FriendlyName": "Animation Actor System",
+	"Description": "",
+	"Category": "Animation",
+	"CreatedBy": "Aaron Kemner",
+	"CreatedByURL": "https://www.aaronkemner.com/",
+	"DocsURL": "",
+	"CanContainContent": false,
+	"Modules": [
+		{
+			"Name": "AnimationActorSystem",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "AnimationActorSystemEditor",
+			"Type": "Editor",
+			"LoadingPhase": "PreDefault"
+		}
+	]
+}
