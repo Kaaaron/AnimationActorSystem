@@ -26,31 +26,31 @@ public:
 #pragma endregion
 
 #pragma region Skeletal Meshes
-	/** The SkeletalMeshActor class to spawn by AnimNotifyState_SpawnSkeletalMeshActor. */
+	/** The SkeletalMeshActor class to spawn by UAnimNotifyState_SpawnSkeletalMeshActor. */
 	UPROPERTY(Config, BlueprintReadWrite, EditAnywhere, Category="Skeletal Mesh")
 	TSoftClassPtr<ASkeletalMeshActor> SkeletalMeshActorClass = ASkeletalMeshActor::StaticClass();
 
-	/** How to load actors referenced by AnimNotifyState_SpawnSkeletalMeshActor */
+	/** How to load actors referenced by UAnimNotifyState_SpawnSkeletalMeshActor */
 	UPROPERTY(Config, BlueprintReadWrite, EditAnywhere, Category="Skeletal Mesh")
 	EAnimActorClassLoadingBehaviour SkeletalMeshActorLoadingBehaviour =
 			EAnimActorClassLoadingBehaviour::FirstTimeRequested_Async;
 
-	/** Can SkeletalMeshActors spawned via this ever affect Navigation? */
+	/** Can SkeletalMeshActors spawned via UAnimNotifyState_SpawnSkeletalMeshActor ever affect Navigation? */
 	UPROPERTY(Config, BlueprintReadWrite, EditAnywhere, Category="Skeletal Mesh")
 	bool bSkeletalCanAffectNavigation = true;
 #pragma endregion
 
 #pragma region Static Meshes
-	/** The StaticMeshActor class to spawn by AnimNotifyState_SpawnStaticMeshActor. */
+	/** The StaticMeshActor class to spawn by UAnimNotifyState_SpawnStaticMeshActor. */
 	UPROPERTY(Config, BlueprintReadWrite, EditAnywhere, Category="Static Mesh")
 	TSoftClassPtr<AStaticMeshActor> StaticMeshActorClass = AStaticMeshActor::StaticClass();
 
-	/** How to load actors referenced by AnimNotifyState_SpawnStaticMeshActor */
+	/** How to load actors referenced by UAnimNotifyState_SpawnStaticMeshActor */
 	UPROPERTY(Config, BlueprintReadWrite, EditAnywhere, Category="Static Mesh")
 	EAnimActorClassLoadingBehaviour StaticMeshActorLoadingBehaviour =
 			EAnimActorClassLoadingBehaviour::FirstTimeRequested_Async;
 
-	/** Can StaticMeshActors spawned via this ever affect Navigation? */
+	/** Can StaticMeshActors spawned via UAnimNotifyState_SpawnStaticMeshActor ever affect Navigation? */
 	UPROPERTY(Config, BlueprintReadWrite, EditAnywhere, Category="Static Mesh")
 	bool bStaticCanAffectNavigation = true;
 #pragma endregion
@@ -64,7 +64,7 @@ public:
 #pragma region Settings Editor Display
 	virtual FText GetSectionText() const override
 	{
-		return FText::FromString("Animation Actor System Version 2");
+		return FText::FromString("Animation Actor System");
 	};
 
 	virtual FText GetSectionDescription() const override
@@ -75,7 +75,7 @@ public:
 
 	virtual FName GetSectionName() const override
 	{
-		return FName(TEXT("Animation Actor System V2"));
+		return FName(TEXT("Animation Actor System"));
 	}
 
 	virtual FName GetCategoryName() const override

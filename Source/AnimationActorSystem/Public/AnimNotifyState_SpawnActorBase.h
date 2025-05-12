@@ -29,15 +29,17 @@ class ANIMATIONACTORSYSTEM_API UAnimNotifyState_SpawnActorBase : public UAnimNot
 	GENERATED_BODY()
 
 public:
-	/** Transform to apply relative to AttachBone, if specified. */
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="AnimActor")
-	FTransform AttachTransform = FTransform::Identity;
-
+	/** The bone or socket the spawned actor should be attached to */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, DisplayName="Attach to", meta = (AnimNotifyBoneName = "true"), Category="AnimActor")
 	FName AttachBone = NAME_None;
-
+	
+	/** Whether to weld simulated bodies (see FAttachmentTransformRules::bWeldSimulatedBodies) */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="AnimActor")
 	bool bWeldSimulatedBodies = false;
+	
+	/** Transform to apply relative to AttachBone, if specified */
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="AnimActor")
+	FTransform AttachTransform = FTransform::Identity;
 	
 	virtual TSoftClassPtr<UObject> GetSpawnableClassToLoad() { return nullptr; };
 

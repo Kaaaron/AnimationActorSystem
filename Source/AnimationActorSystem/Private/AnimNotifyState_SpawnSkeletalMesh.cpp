@@ -2,6 +2,7 @@
 
 
 #include "AnimNotifyState_SpawnSkeletalMesh.h"
+#include "Animation/AnimSequenceBase.h"
 
 void UAnimNotifyState_SpawnSkeletalMesh::PostSpawnActor(AActor* SpawnedActor, UAnimationActorSubsystem* Subsystem,
                                                         USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration,
@@ -13,6 +14,11 @@ void UAnimNotifyState_SpawnSkeletalMesh::PostSpawnActor(AActor* SpawnedActor, UA
 	USkeletalMeshComponent* Comp = SKMA->GetSkeletalMeshComponent();
 	check(Comp)
 	Comp->SetSkeletalMesh(MeshToSpawn);
+	if(AnimationToPlay)
+	{
+		Comp->PlayAnimation(AnimationToPlay, bOverrideLoopBehaviour ? bLoopAnimation : AnimationToPlay->bLoop);
+		Comp->InitAnim(false);
+	}
 	if(bOverrideCollisionProfile)
 	{
 		Comp->SetCollisionProfileName(CollisionProfileOverride.Name, true);

@@ -3,7 +3,7 @@
 	"Version": 2,
 	"VersionName": "2.0",
 	"FriendlyName": "Animation Actor System",
-	"Description": "",
+	"Description": "Spawn Actors and Meshes right from your inside animations!",
 	"Category": "Animation",
 	"CreatedBy": "Aaron Kemner",
 	"CreatedByURL": "https://www.aaronkemner.com/",

@@ -27,13 +27,17 @@ public:
 		NotifyColor = FColor(33,244,250);
 #endif
 	}
+
+	/** The static mesh to spawn for the duration of this notify */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="AnimActor")
 	TObjectPtr<UStaticMesh> MeshToSpawn = nullptr;
 
+	/** Whether to override the static mesh's collision profile */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="AnimActor")
 	bool bOverrideCollisionProfile = false;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(EditCondition="bOverrideCollisionProfile", EditConditionHides), Category="AnimActor")
+	/** Override for the static mesh's collision profile */
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(EditCondition="bOverrideCollisionProfile"), Category="AnimActor")
 	FCollisionProfileName CollisionProfileOverride = FCollisionProfileName();
 
 #pragma region UAnimNotifyState_SpawnActorBase Interface
