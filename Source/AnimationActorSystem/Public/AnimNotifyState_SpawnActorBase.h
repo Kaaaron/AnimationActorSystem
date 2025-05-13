@@ -29,6 +29,12 @@ class ANIMATIONACTORSYSTEM_API UAnimNotifyState_SpawnActorBase : public UAnimNot
 	GENERATED_BODY()
 
 public:
+	UAnimNotifyState_SpawnActorBase()
+	{
+#if WITH_EDITORONLY_DATA
+		bShouldFireInEditor = true;
+#endif
+	}
 	/** The bone or socket the spawned actor should be attached to */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, DisplayName="Attach to", meta = (AnimNotifyBoneName = "true"), Category="AnimActor")
 	FName AttachBone = NAME_None;
@@ -75,6 +81,10 @@ public:
 		StaticPartialAnimActorGuid = FGuid::NewGuid();
 		Super::PostDuplicate(DuplicateMode);
 	};
+	
+#if WITH_EDITOR
+	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
 #pragma endregion
 
 protected:
@@ -87,4 +97,18 @@ protected:
 	 * this notify being fired from the same animation but on different actors/components.
 	 */
 	FGuid ConstructDeterministicGuidFromComponent(USkeletalMeshComponent* InComponent) const;
+
+private:
+#if WITH_EDITORONLY_DATA
+	/** Cached Data for use in the Animation Editor to be able to react to property changes
+	 * when the Notify is already in progress. */
+	struct FCachedNotifyData
+	{
+		FGuid CachedDeterministicGuid = FGuid();
+		TObjectPtr<USkeletalMeshComponent> MeshComp = nullptr;
+		TObjectPtr<UAnimSequenceBase>Animation = nullptr;
+		float TotalDuration = 0.f;
+		FAnimNotifyEventReference EventReference = FAnimNotifyEventReference();
+	} EditorCachedNotifyData;
+#endif
 };

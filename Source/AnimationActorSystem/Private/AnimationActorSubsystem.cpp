@@ -28,20 +28,20 @@ AActor* UAnimationActorSubsystem::SpawnAnimActor(const TSubclassOf<AActor>& Clas
 		return nullptr;
 	}
 	
+	if(FActorCounter* FoundCounter = SpawnedActors.Find(Guid))
+	{
+		if(AActor* Actor = FoundCounter->Increment())
+		{
+			return Actor;
+		}
+	}
+	
 	FActorSpawnParameters Params = FActorSpawnParameters();
 	Params.ObjectFlags = Params.ObjectFlags & RF_Transient;
 	AActor* SpawnedActor = World->SpawnActor(Class, &Transform, Params);
-
-	if(FActorCounter* FoundCounter = SpawnedActors.Find(Guid))
-	{
-		FoundCounter->Add(SpawnedActor);
-	}
-	else
-	{
-		SpawnedActors.Add(Guid, {{SpawnedActor}});	
-	}
-	
+	SpawnedActors.Add(Guid, FActorCounter(SpawnedActor));
 	return SpawnedActor;
+	
 }
 
 void UAnimationActorSubsystem::DestroyAnimActor(const FGuid Guid)
@@ -121,6 +121,7 @@ bool UAnimationActorSubsystem::DoesSupportWorldType(const EWorldType::Type World
 {
 	// This Subsystem is generally pretty lightweight, and it doesn't tick, so I'd rather have it be active, in case
 	// a notify needs it, rather than not.
-	// If not desired, the notify should not fire instead of this not supporting a given world type.
-	return true;
+	// If not desired, the Notify should not fire instead of this not supporting a given world type.
+	return !(WorldType == EWorldType::Type::None
+		|| WorldType == EWorldType::Type::Editor);
 }

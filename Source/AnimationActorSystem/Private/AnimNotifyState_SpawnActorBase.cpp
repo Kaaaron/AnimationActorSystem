@@ -29,11 +29,19 @@ void UAnimNotifyState_SpawnActorBase::NotifyBegin(USkeletalMeshComponent* MeshCo
 	{
 		return;
 	}
-	
+
+	const FGuid SpawnGuid = ConstructDeterministicGuidFromComponent(MeshComp);
+#if WITH_EDITORONLY_DATA
+	EditorCachedNotifyData.CachedDeterministicGuid = SpawnGuid;
+	EditorCachedNotifyData.MeshComp = MeshComp;
+	EditorCachedNotifyData.Animation = Animation;
+	EditorCachedNotifyData.TotalDuration = TotalDuration;
+	EditorCachedNotifyData.EventReference = EventReference;
+#endif
 	auto ClassLoaded = [this,
 		SpawnableClass,
 		AttachTransform = AttachTransform,
-		SpawnGuid = ConstructDeterministicGuidFromComponent(MeshComp),
+		SpawnGuid,
 		MeshComp,
 		Animation,
 		TotalDuration,
@@ -90,6 +98,37 @@ void UAnimNotifyState_SpawnActorBase::OnAnimNotifyCreatedInEditor(FAnimNotifyEve
 
 	StaticPartialAnimActorGuid = FGuid::NewGuid();
 }
+
+void UAnimNotifyState_SpawnActorBase::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+
+	const UWorld* World = EditorCachedNotifyData.MeshComp ? EditorCachedNotifyData.MeshComp->GetWorld() : nullptr;
+	if(!World)
+	{
+		return;
+	}
+	
+	if (UAnimationActorSubsystem* SubSys = World->GetSubsystem<UAnimationActorSubsystem>())
+	{
+		if(EditorCachedNotifyData.CachedDeterministicGuid.IsValid())
+		{
+			SubSys->DestroyAnimActor(EditorCachedNotifyData.CachedDeterministicGuid);
+			if(AActor* SpawnedActor = SubSys->SpawnAnimActor(
+					GetSpawnableClassToLoad().LoadSynchronous(),
+					AttachTransform,
+					EditorCachedNotifyData.CachedDeterministicGuid))
+			{
+				PostSpawnActor(SpawnedActor,
+				   SubSys,
+				   EditorCachedNotifyData.MeshComp,
+				   EditorCachedNotifyData.Animation,
+				   EditorCachedNotifyData.TotalDuration,
+				   EditorCachedNotifyData.EventReference);
+			}
+		}
+	}
+}
 #endif
 
 void UAnimNotifyState_SpawnActorBase::PostSpawnActor(AActor* SpawnedActor, UAnimationActorSubsystem* Subsystem,
@@ -113,7 +152,6 @@ void UAnimNotifyState_SpawnActorBase::PostSpawnActor(AActor* SpawnedActor, UAnim
 		MirroredBone = MDT->GetSettingsMirrorName(AttachBone);
 	}
 	FName BoneToUse = MirroredBone == NAME_None ? AttachBone : MirroredBone;
-	ensure(BoneToUse == NAME_None || MeshComp->DoesSocketExist(BoneToUse));
 
 	SpawnedActor->AttachToComponent(MeshComp, Rule, BoneToUse);
 }

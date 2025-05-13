@@ -20,44 +20,33 @@ enum class EAnimActorClassLoadingBehaviour: uint8
 /**
  * Holds a pointer to an actor and a counter how often it has been added.
  */
-USTRUCT()
 struct FActorCounter
 {
-	GENERATED_BODY()
-public:
-	FActorCounter() =  default;
-	FActorCounter(AActor* InNewData)
+	FActorCounter() = delete;
+	explicit  FActorCounter(AActor* InNewData)
 	{
 		Data = InNewData;
 		Counter = 0;
 	}
 	
-	void Add (AActor* InNewData)
+	AActor* Increment ()
 	{
-		check(InNewData);
-		if(!Data)
-		{
-			Data = InNewData;
-			return;
-		}
-		
-		check(Data);
-		if(!ensureAlwaysMsgf(Data == InNewData,
-			TEXT("ActorCounter for %s getting new data for %s. Reassigning. May loose data."), *Data->GetName(), *InNewData->GetName()))
-		{
-			Data = InNewData;
-			Counter = 0;
-			return;
-		}
-		
 		Counter++;
-		
+		if(!Data.IsValid())
+		{
+			return nullptr;
+		}
+		return Data.Get(false);		
 	}
 
 	AActor* RemoveSingle()
 	{		
 		Counter = FMath::Max(Counter-1, 0);
-		AActor* RV = Data;
+		AActor* RV = nullptr;
+		if(Data.IsValid())
+		{
+			RV = Data.Get();
+		}
 		if(!Counter)
 		{
 			Data = nullptr;
@@ -69,8 +58,7 @@ public:
 		{ return bool(Counter);}
 	
 private:
-	UPROPERTY(Transient)
-	TObjectPtr<AActor> Data = nullptr;
+	TWeakObjectPtr<AActor> Data = nullptr;
 	
 	int Counter = 0;
 };
