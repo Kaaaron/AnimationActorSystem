@@ -36,4 +36,4 @@ void FAnimationActorSystemEditorModule::ShutdownModule()
 	FSlateStyleRegistry::UnRegisterSlateStyle(Style->GetStyleSetName());
 }
 
-IMPLEMENT_MODULE(FAnimationActorSystemEditorModule, AnimationActorSystemV2Editor)
+IMPLEMENT_MODULE(FAnimationActorSystemEditorModule, AnimationActorSystemEditor)

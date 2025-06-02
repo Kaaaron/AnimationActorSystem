@@ -40,7 +40,7 @@ void UAnimNotifyState_SpawnActorBase::NotifyBegin(USkeletalMeshComponent* MeshCo
 #endif
 	auto ClassLoaded = [this,
 		SpawnableClass,
-		AttachTransform = AttachTransform,
+		NotifyAttachTransform = AttachTransform,
 		SpawnGuid,
 		MeshComp,
 		Animation,
@@ -50,7 +50,7 @@ void UAnimNotifyState_SpawnActorBase::NotifyBegin(USkeletalMeshComponent* MeshCo
 			if (UAnimationActorSubsystem* SubSys = UAnimationActorSubsystem::GetFromMesh(MeshComp))
 			{
 				AActor* SpawnedActor = SubSys->SpawnAnimActor(SpawnableClass.Get(),
-					AttachTransform,
+					NotifyAttachTransform,
 					SpawnGuid);
 				if(SpawnedActor) // May be nullptr, for example if the world is tearing down
 				{
