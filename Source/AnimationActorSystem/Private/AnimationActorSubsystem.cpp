@@ -81,10 +81,10 @@ void UAnimationActorSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 	if (Settings->SkeletalMeshActorLoadingBehaviour == EAnimActorClassLoadingBehaviour::BeginPlay_Async)
 	{
 		StreamableManager.RequestAsyncLoad(Settings->SkeletalMeshActorClass.ToSoftObjectPath(),
-		                                   FStreamableDelegate::CreateWeakLambda(this, [this, Settings]
+		                                   FStreamableDelegate::CreateWeakLambda(this, [this]
 		                                   {
 			                                   ReferencedAnimActorClasses.AddUnique(
-				                                   Settings->SkeletalMeshActorClass.Get());
+				                                   UAnimationActorSystemSettings::Get()->SkeletalMeshActorClass.Get());
 		                                   }));
 	}
 	else if (Settings->SkeletalMeshActorLoadingBehaviour == EAnimActorClassLoadingBehaviour::BeginPlay_Blocking)
@@ -96,10 +96,10 @@ void UAnimationActorSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 	if (Settings->StaticMeshActorLoadingBehaviour == EAnimActorClassLoadingBehaviour::BeginPlay_Async)
 	{
 		StreamableManager.RequestAsyncLoad(Settings->StaticMeshActorClass.ToSoftObjectPath(),
-		                                   FStreamableDelegate::CreateWeakLambda(this, [this, Settings]
+		                                   FStreamableDelegate::CreateWeakLambda(this, [this]
 		                                   {
-			                                   ReferencedAnimActorClasses.
-					                                   AddUnique(Settings->StaticMeshActorClass.Get());
+			                                   ReferencedAnimActorClasses.AddUnique(
+			                                   	UAnimationActorSystemSettings::Get()->StaticMeshActorClass.Get());
 		                                   }));
 	}
 	else if (Settings->StaticMeshActorLoadingBehaviour == EAnimActorClassLoadingBehaviour::BeginPlay_Blocking)

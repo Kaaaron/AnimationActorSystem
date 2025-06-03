@@ -41,7 +41,7 @@ public:
 	FCollisionProfileName CollisionProfileOverride = FCollisionProfileName();
 
 #pragma region UAnimNotifyState_SpawnActorBase Interface
-	virtual TSoftClassPtr<UObject> GetSpawnableClassToLoad() override
+	virtual TSoftClassPtr<AActor> GetSpawnableClassToLoad() override
 		{ return AStaticMeshActor::StaticClass();	};
 	
 	virtual EAnimActorClassLoadingBehaviour GetLoadingBehaviour() override

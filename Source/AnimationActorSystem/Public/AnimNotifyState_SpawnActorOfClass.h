@@ -27,13 +27,17 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="AnimActor")
 	TSoftClassPtr<AActor> ClassToSpawn = nullptr;
 
-	virtual TSoftClassPtr<UObject> GetSpawnableClassToLoad() override
+#pragma region UAnimNotifyState_SpawnActorBase Interface
+	virtual TSoftClassPtr<AActor> GetSpawnableClassToLoad() override
 		{ return ClassToSpawn; };
 
 	virtual EAnimActorClassLoadingBehaviour GetLoadingBehaviour() override
 		{ return UAnimationActorSystemSettings::Get()->ActorClassLoadingBehaviour; };
+#pragma endregion
 
+#pragma region UAnimNotifyState Interface
 #if WITH_EDITOR
 	virtual FString GetNotifyName_Implementation() const override;
 #endif
+#pragma endregion
 };

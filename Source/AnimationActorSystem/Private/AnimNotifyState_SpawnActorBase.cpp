@@ -16,7 +16,7 @@ void UAnimNotifyState_SpawnActorBase::NotifyBegin(USkeletalMeshComponent* MeshCo
 {
 	Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
 
-	const TSoftClassPtr<UObject> SpawnableClass = GetSpawnableClassToLoad();
+	const TSoftClassPtr<AActor> SpawnableClass = GetSpawnableClassToLoad();
 
 	if (!SpawnableClass)
 	{
@@ -102,7 +102,7 @@ void UAnimNotifyState_SpawnActorBase::OnAnimNotifyCreatedInEditor(FAnimNotifyEve
 	StaticPartialAnimActorGuid = FGuid::NewGuid();
 }
 
-void UAnimNotifyState_SpawnActorBase::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
+void UAnimNotifyState_SpawnActorBase::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 
