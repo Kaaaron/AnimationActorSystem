@@ -39,7 +39,7 @@ AActor* UAnimationActorSubsystem::SpawnAnimActor(const TSubclassOf<AActor>& Clas
 	FActorSpawnParameters Params = FActorSpawnParameters();
 	Params.ObjectFlags = Params.ObjectFlags & RF_Transient;
 	AActor* SpawnedActor = World->SpawnActor(Class, &Transform, Params);
-	SpawnedActors.Add(Guid, FActorCounter(SpawnedActor));
+	SpawnedActors.Emplace(Guid, FActorCounter(SpawnedActor)).Increment();
 	return SpawnedActor;
 	
 }
@@ -49,16 +49,24 @@ void UAnimationActorSubsystem::DestroyAnimActor(const FGuid Guid)
 	if (FActorCounter* ActorCounter = SpawnedActors.Find(Guid))
 	{		
 		AActor* Actor = ActorCounter->RemoveSingle();
-
-		if(IsValid(Actor)) // Check bc maybe this actor has been destroyed already from an outside system.
-		{
-			Actor->Destroy();
-		}
 		
-		if(!ActorCounter)
+		if(!bool(*ActorCounter))
 		{
+			if(IsValid(Actor)) // Check bc maybe this actor has been destroyed already from an outside system.
+			{
+				Actor->Destroy();
+			}
+			
 			SpawnedActors.Remove(Guid);
 		}
+		else
+		{
+			UE_LOG(LogAnimActorSys, Display, TEXT("Requested destruction of AnimActor for Guid %s, but but it is still active %d times"), *Guid.ToString(), ActorCounter->GetCount())
+		}
+	}
+	else
+	{
+		UE_LOG(LogAnimActorSys, Warning, TEXT("Requested destruction of AnimActor for Guid %s, but this Guid has no Counter."), *Guid.ToString())
 	}
 }
 
@@ -73,7 +81,7 @@ void UAnimationActorSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 	if (Settings->SkeletalMeshActorLoadingBehaviour == EAnimActorClassLoadingBehaviour::BeginPlay_Async)
 	{
 		StreamableManager.RequestAsyncLoad(Settings->SkeletalMeshActorClass.ToSoftObjectPath(),
-		                                   FStreamableDelegate::CreateWeakLambda(&InWorld, [this, Settings]
+		                                   FStreamableDelegate::CreateWeakLambda(this, [this, Settings]
 		                                   {
 			                                   ReferencedAnimActorClasses.AddUnique(
 				                                   Settings->SkeletalMeshActorClass.Get());
@@ -88,7 +96,7 @@ void UAnimationActorSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 	if (Settings->StaticMeshActorLoadingBehaviour == EAnimActorClassLoadingBehaviour::BeginPlay_Async)
 	{
 		StreamableManager.RequestAsyncLoad(Settings->StaticMeshActorClass.ToSoftObjectPath(),
-		                                   FStreamableDelegate::CreateWeakLambda(&InWorld, [this, Settings]
+		                                   FStreamableDelegate::CreateWeakLambda(this, [this, Settings]
 		                                   {
 			                                   ReferencedAnimActorClasses.
 					                                   AddUnique(Settings->StaticMeshActorClass.Get());
@@ -100,15 +108,15 @@ void UAnimationActorSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 	}
 }
 
-UAnimationActorSubsystem* UAnimationActorSubsystem::GetFromMesh(USkeletalMeshComponent* MeshComp)
+UAnimationActorSubsystem* UAnimationActorSubsystem::Get(const UObject* WorldContext)
 {
-	if(!MeshComp)
+	if(!WorldContext)
 	{
-		UE_LOG(LogAnimActorSys, Error, TEXT("Tried to get AnimationActorSubsystem from invalid MeshComp."))
+		UE_LOG(LogAnimActorSys, Error, TEXT("Tried to get AnimationActorSubsystem from invalid WorldContext Object."))
 		return nullptr;
 	}
 	
-	UWorld* World = MeshComp->GetWorld();
+	UWorld* World = WorldContext->GetWorld();
 	if (!ensureMsgf(World, TEXT("Please ensure to only query the AnimationActorSubsystem only for supported world types.")))
 	{
 		return nullptr;

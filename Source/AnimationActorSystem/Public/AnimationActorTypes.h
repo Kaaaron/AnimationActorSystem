@@ -32,21 +32,13 @@ struct FActorCounter
 	AActor* Increment ()
 	{
 		Counter++;
-		if(!Data.IsValid())
-		{
-			return nullptr;
-		}
-		return Data.Get(false);		
+		return Data.Get();		
 	}
 
 	AActor* RemoveSingle()
 	{		
 		Counter = FMath::Max(Counter-1, 0);
-		AActor* RV = nullptr;
-		if(Data.IsValid())
-		{
-			RV = Data.Get();
-		}
+		AActor* RV = Data.Get();
 		if(!Counter)
 		{
 			Data = nullptr;
@@ -54,8 +46,11 @@ struct FActorCounter
 		return RV;
 	}
 
-	operator bool() const
-		{ return bool(Counter);}
+	int GetCount() const
+		 { return Counter; }
+	
+	explicit operator bool() const
+		{ return Counter > 0;}
 	
 private:
 	TWeakObjectPtr<AActor> Data = nullptr;
