@@ -31,30 +31,40 @@ void UAnimNotifyState_SpawnActorBase::NotifyBegin(USkeletalMeshComponent* MeshCo
 	}
 
 	const FGuid SpawnGuid = ConstructDeterministicGuidFromComponent(MeshComp);
+	TWeakObjectPtr<USkeletalMeshComponent> WeakMeshComp(MeshComp);
+	TWeakObjectPtr<UAnimSequenceBase> WeakAnimation(Animation);
+	AnimActorSys::FWeakAnimNotifyEventReference WeakEventRef(EventReference);
 #if WITH_EDITORONLY_DATA
-	FCachedNotifyData CachedData = EditorCachedNotifyData.Emplace(
-		SpawnGuid,
+	FCachedNotifyData CachedData = EditorCachedNotifyData.Emplace(SpawnGuid,
 		{MeshComp, Animation, TotalDuration, EventReference});	
 #endif
-	
+
 	auto ClassLoaded = [this,
 		SpawnableClass,
 		NotifyAttachTransform = AttachTransform,
 		SpawnGuid,
-		MeshComp,
-		Animation,
+		WeakMeshComp,
+		WeakAnimation,
 		TotalDuration,
-		EventReference]
+		WeakEventRef]
 		{
-			if (UAnimationActorSubsystem* SubSys = UAnimationActorSubsystem::Get(MeshComp))
+			if (UAnimationActorSubsystem* SubSys = UAnimationActorSubsystem::Get(WeakMeshComp.Get()))
 			{
 				AActor* SpawnedActor = SubSys->SpawnAnimActor(SpawnableClass.Get(),
-					NotifyAttachTransform,
-					SpawnGuid);
-				if(SpawnedActor) // May be nullptr, for example if the world is tearing down
+																NotifyAttachTransform,
+																SpawnGuid);
+				if(SpawnedActor // May still be nullptr, for example if the world is tearing down
+					&& WeakMeshComp.IsValid()
+					&& WeakAnimation.IsValid())
 				{
-					PostSpawnActor(SpawnedActor, SubSys, MeshComp, Animation, TotalDuration, EventReference);
+					PostSpawnActor(SpawnedActor, SubSys, WeakMeshComp.Get(), WeakAnimation.Get(), TotalDuration, WeakEventRef.ToEventReference());
+					return;
 				}
+				UE_LOG(LogAnimActorSys, Error, TEXT("Failed to spawn AnimActor(%s)."), *SpawnableClass->GetName())
+				if(SpawnedActor)
+				{
+					SubSys->DestroyAnimActor(SpawnGuid);
+				}				
 			}
 		};
 

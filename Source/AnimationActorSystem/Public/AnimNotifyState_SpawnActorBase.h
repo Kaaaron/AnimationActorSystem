@@ -4,10 +4,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AnimationActorSystem.h"
 #include "Animation/AnimNotifies/AnimNotifyState.h"
 #include "AnimationActorTypes.h"
-#include "Animation/MirrorDataTable.h"
 #include "AnimNotifyState_SpawnActorBase.generated.h"
 
 
@@ -119,36 +117,7 @@ private:
 		TWeakObjectPtr<USkeletalMeshComponent> MeshComp = nullptr;
 		TWeakObjectPtr<UAnimSequenceBase> Animation = nullptr;
 		float TotalDuration = 0.f;
-
-		/** Partial Data from FAnimNotifyEventReference but with TObjectPtr being switched to TWeakObjectPtr */
-		struct FWeakAnimNotifyEventReference
-		{
-			explicit FWeakAnimNotifyEventReference(const FAnimNotifyEventReference& SourceEventReference)
-				:MirrorTable(SourceEventReference.GetMirrorDataTable()),
-				NotifySource(SourceEventReference.GetSourceObject()),
-				CurrentAnimTime(SourceEventReference.GetCurrentAnimationTime()),
-				bActiveContext(SourceEventReference.IsActiveContext())
-			{}
-
-			/** Converts to a reconstructed version of the original EventReference used to construct this one,
-			 * excluding Contextual data like what FAnimNotifyEventReference gets from the TickRecord. */
-			FAnimNotifyEventReference ToEventReference() const
-			{
-				return FAnimNotifyEventReference(nullptr, NotifySource.Get(), MirrorTable.Get());
-			}
-			
-			/** If set, the Notify has been mirrored. */
-			TWeakObjectPtr<const UMirrorDataTable> MirrorTable = nullptr; 
-
-			/** The source object of this Notify (e.g. AnimSequence) */
-			TWeakObjectPtr<const UObject> NotifySource = nullptr;
-
-			/** The recorded time from the tick record that this notify event was fired at */
-			float CurrentAnimTime = 0.0f;
-
-			/** Whether the context this notify was fired from is active or not (active == not blending out). */
-			bool bActiveContext = false;
-		} WeakEventReference;
+		AnimActorSys::FWeakAnimNotifyEventReference WeakEventReference;
 	};
 	TMap<FGuid, FCachedNotifyData> EditorCachedNotifyData;
 #endif

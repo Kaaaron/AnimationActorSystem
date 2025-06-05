@@ -5,6 +5,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Animation/AnimNotifyQueue.h"
+#include "Animation/MirrorDataTable.h"
 
 #include "AnimationActorTypes.generated.h"
 
@@ -17,43 +19,76 @@ enum class EAnimActorClassLoadingBehaviour: uint8
 	FirstTimeRequested_Async	UMETA(DisplayName="First Time Requested (Asynchronous)")
 };
 
-/**
- * Holds a pointer to an actor and a counter how often it has been added.
- */
-struct FActorCounter
+namespace AnimActorSys
 {
-	FActorCounter() = delete;
-	explicit  FActorCounter(AActor* InNewData)
+	/** Partial Data from FAnimNotifyEventReference but with TObjectPtr being switched to TWeakObjectPtr */
+	struct FWeakAnimNotifyEventReference
 	{
-		Data = InNewData;
-		Counter = 0;
-	}
-	
-	AActor* Increment ()
-	{
-		Counter++;
-		return Data.Get();		
-	}
+		explicit FWeakAnimNotifyEventReference(const FAnimNotifyEventReference& SourceEventReference)
+			:MirrorTable(SourceEventReference.GetMirrorDataTable()),
+			NotifySource(SourceEventReference.GetSourceObject()),
+			CurrentAnimTime(SourceEventReference.GetCurrentAnimationTime()),
+			bActiveContext(SourceEventReference.IsActiveContext())
+		{}
 
-	AActor* RemoveSingle()
-	{		
-		Counter = FMath::Max(Counter-1, 0);
-		AActor* RV = Data.Get();
-		if(!Counter)
+		/** Converts to a reconstructed version of the original EventReference used to construct this one,
+		 * excluding Contextual data like what FAnimNotifyEventReference gets from the TickRecord. */
+		FAnimNotifyEventReference ToEventReference() const
 		{
-			Data = nullptr;
+			return FAnimNotifyEventReference(nullptr, NotifySource.Get(), MirrorTable.Get());
 		}
-		return RV;
-	}
+				
+		/** If set, the Notify has been mirrored. */
+		TWeakObjectPtr<const UMirrorDataTable> MirrorTable = nullptr; 
 
-	int GetCount() const
-		 { return Counter; }
-	
-	explicit operator bool() const
-		{ return Counter > 0;}
-	
-private:
-	TWeakObjectPtr<AActor> Data = nullptr;
-	
-	int Counter = 0;
-};
+		/** The source object of this Notify (e.g. AnimSequence) */
+		TWeakObjectPtr<const UObject> NotifySource = nullptr;
+
+		/** The recorded time from the tick record that this notify event was fired at */
+		float CurrentAnimTime = 0.0f;
+
+		/** Whether the context this notify was fired from is active or not (active == not blending out). */
+		bool bActiveContext = false;
+	};
+
+	/**
+	 * Holds a pointer to an actor and a counter how often it has been added.
+	 */
+	struct FActorCounter
+	{
+		FActorCounter() = delete;
+		explicit  FActorCounter(AActor* InNewData)
+		{
+			Data = InNewData;
+			Counter = 0;
+		}
+		
+		AActor* Increment ()
+		{
+			Counter++;
+			return Data.Get();		
+		}
+
+		AActor* RemoveSingle()
+		{		
+			Counter = FMath::Max(Counter-1, 0);
+			AActor* RV = Data.Get();
+			if(!Counter)
+			{
+				Data = nullptr;
+			}
+			return RV;
+		}
+
+		int GetCount() const
+			 { return Counter; }
+		
+		explicit operator bool() const
+			{ return Counter > 0;}
+		
+	private:
+		TWeakObjectPtr<AActor> Data = nullptr;
+		
+		int Counter = 0;
+	};
+}

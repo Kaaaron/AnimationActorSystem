@@ -31,7 +31,7 @@ public:
 	
 private:
 	/** Spawned actors mapped as the GUID this system receives from the Notify to a counter of actor pointers. */
-	TMap<FGuid, FActorCounter> SpawnedActors;
+	TMap<FGuid, AnimActorSys::FActorCounter> SpawnedActors;
 
 	/** List of referenced classes to hold onto, to prevent them from being GC'd */
 	UPROPERTY(Transient)

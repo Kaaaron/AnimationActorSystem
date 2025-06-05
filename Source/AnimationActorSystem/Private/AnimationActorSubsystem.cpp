@@ -28,7 +28,7 @@ AActor* UAnimationActorSubsystem::SpawnAnimActor(const TSubclassOf<AActor>& Clas
 		return nullptr;
 	}
 	
-	if(FActorCounter* FoundCounter = SpawnedActors.Find(Guid))
+	if(AnimActorSys::FActorCounter* FoundCounter = SpawnedActors.Find(Guid))
 	{
 		if(AActor* Actor = FoundCounter->Increment())
 		{
@@ -39,14 +39,14 @@ AActor* UAnimationActorSubsystem::SpawnAnimActor(const TSubclassOf<AActor>& Clas
 	FActorSpawnParameters Params = FActorSpawnParameters();
 	Params.ObjectFlags = Params.ObjectFlags & RF_Transient;
 	AActor* SpawnedActor = World->SpawnActor(Class, &Transform, Params);
-	SpawnedActors.Emplace(Guid, FActorCounter(SpawnedActor)).Increment();
+	SpawnedActors.Emplace(Guid, AnimActorSys::FActorCounter(SpawnedActor)).Increment();
 	return SpawnedActor;
 	
 }
 
 void UAnimationActorSubsystem::DestroyAnimActor(const FGuid Guid)
 {
-	if (FActorCounter* ActorCounter = SpawnedActors.Find(Guid))
+	if (AnimActorSys::FActorCounter* ActorCounter = SpawnedActors.Find(Guid))
 	{		
 		AActor* Actor = ActorCounter->RemoveSingle();
 		
