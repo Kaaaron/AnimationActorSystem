@@ -18,7 +18,7 @@ void FAnimationActorSystemEditorModule::StartupModule()
 	if(!FPaths::DirectoryExists(ResourcesPath))
 		return; // No clue why anyone would get this plugin but not get the resources dir...anyway, idrc 
 	
-	Style = MakeShareable(new FSlateStyleSet("AnimActorSystem_StyleSet"));
+	Style = MakeShared<FSlateStyleSet>("AnimActorSystem_StyleSet");
 	Style->SetContentRoot(ResourcesPath);
 
 	Style->Set("ClassThumbnail.AnimNotifyState_SpawnActorBase",
@@ -36,4 +36,4 @@ void FAnimationActorSystemEditorModule::ShutdownModule()
 	FSlateStyleRegistry::UnRegisterSlateStyle(Style->GetStyleSetName());
 }
 
-IMPLEMENT_MODULE(FAnimationActorSystemEditorModule, AnimationActorSystemV2Editor)
+IMPLEMENT_MODULE(FAnimationActorSystemEditorModule, AnimationActorSystemEditor)

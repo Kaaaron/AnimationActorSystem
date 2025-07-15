@@ -34,7 +34,7 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="AnimActor")
 	TObjectPtr<USkeletalMesh> MeshToSpawn = nullptr;
 
-	/** The animation that should play on the notifies skeletal mesh */
+	/** The animation that should play on the notifies spawned skeletal mesh */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="AnimActor")
 	TObjectPtr<UAnimSequenceBase> AnimationToPlay = nullptr;
 
@@ -56,7 +56,7 @@ public:
 	FCollisionProfileName CollisionProfileOverride = FCollisionProfileName();
 
 #pragma region UAnimNotifyState_SpawnActorBase Interface
-	virtual TSoftClassPtr<UObject> GetSpawnableClassToLoad() override
+	virtual TSoftClassPtr<AActor> GetSpawnableClassToLoad() override
 		{ return ASkeletalMeshActor::StaticClass(); };
 	
 	virtual EAnimActorClassLoadingBehaviour GetLoadingBehaviour() override

@@ -16,7 +16,7 @@ void UAnimNotifyState_SpawnActorBase::NotifyBegin(USkeletalMeshComponent* MeshCo
 {
 	Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
 
-	const TSoftClassPtr<UObject> SpawnableClass = GetSpawnableClassToLoad();
+	const TSoftClassPtr<AActor> SpawnableClass = GetSpawnableClassToLoad();
 
 	if (!SpawnableClass)
 	{
@@ -31,31 +31,40 @@ void UAnimNotifyState_SpawnActorBase::NotifyBegin(USkeletalMeshComponent* MeshCo
 	}
 
 	const FGuid SpawnGuid = ConstructDeterministicGuidFromComponent(MeshComp);
+	TWeakObjectPtr<USkeletalMeshComponent> WeakMeshComp(MeshComp);
+	TWeakObjectPtr<UAnimSequenceBase> WeakAnimation(Animation);
+	AnimActorSys::FWeakAnimNotifyEventReference WeakEventRef(EventReference);
 #if WITH_EDITORONLY_DATA
-	EditorCachedNotifyData.CachedDeterministicGuid = SpawnGuid;
-	EditorCachedNotifyData.MeshComp = MeshComp;
-	EditorCachedNotifyData.Animation = Animation;
-	EditorCachedNotifyData.TotalDuration = TotalDuration;
-	EditorCachedNotifyData.EventReference = EventReference;
+	FCachedNotifyData CachedData = EditorCachedNotifyData.Emplace(SpawnGuid,
+		{MeshComp, Animation, TotalDuration, EventReference});	
 #endif
+
 	auto ClassLoaded = [this,
 		SpawnableClass,
-		AttachTransform = AttachTransform,
+		NotifyAttachTransform = AttachTransform,
 		SpawnGuid,
-		MeshComp,
-		Animation,
+		WeakMeshComp,
+		WeakAnimation,
 		TotalDuration,
-		EventReference]
+		WeakEventRef]
 		{
-			if (UAnimationActorSubsystem* SubSys = UAnimationActorSubsystem::GetFromMesh(MeshComp))
+			if (UAnimationActorSubsystem* SubSys = UAnimationActorSubsystem::Get(WeakMeshComp.Get()))
 			{
 				AActor* SpawnedActor = SubSys->SpawnAnimActor(SpawnableClass.Get(),
-					AttachTransform,
-					SpawnGuid);
-				if(SpawnedActor) // May be nullptr, for example if the world is tearing down
+																NotifyAttachTransform,
+																SpawnGuid);
+				if(SpawnedActor // May still be nullptr, for example if the world is tearing down
+					&& WeakMeshComp.IsValid()
+					&& WeakAnimation.IsValid())
 				{
-					PostSpawnActor(SpawnedActor, SubSys, MeshComp, Animation, TotalDuration, EventReference);
+					PostSpawnActor(SpawnedActor, SubSys, WeakMeshComp.Get(), WeakAnimation.Get(), TotalDuration, WeakEventRef.ToEventReference());
+					return;
 				}
+				UE_LOG(LogAnimActorSys, Error, TEXT("Failed to spawn AnimActor(%s)."), *SpawnableClass->GetName())
+				if(SpawnedActor)
+				{
+					SubSys->DestroyAnimActor(SpawnGuid);
+				}				
 			}
 		};
 
@@ -85,9 +94,13 @@ void UAnimNotifyState_SpawnActorBase::NotifyEnd(USkeletalMeshComponent* MeshComp
 {
 	Super::NotifyEnd(MeshComp, Animation, EventReference);
 
-	if (UAnimationActorSubsystem* SubSys = UAnimationActorSubsystem::GetFromMesh(MeshComp))
+	if (UAnimationActorSubsystem* SubSys = UAnimationActorSubsystem::Get(MeshComp))
 	{
-		SubSys->DestroyAnimActor(ConstructDeterministicGuidFromComponent(MeshComp));
+		const FGuid DeterministicGuid = ConstructDeterministicGuidFromComponent(MeshComp);
+		SubSys->DestroyAnimActor(DeterministicGuid);
+#if WITH_EDITORONLY_DATA
+		EditorCachedNotifyData.Remove(DeterministicGuid);
+#endif
 	}
 }
 
@@ -99,32 +112,26 @@ void UAnimNotifyState_SpawnActorBase::OnAnimNotifyCreatedInEditor(FAnimNotifyEve
 	StaticPartialAnimActorGuid = FGuid::NewGuid();
 }
 
-void UAnimNotifyState_SpawnActorBase::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
+void UAnimNotifyState_SpawnActorBase::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 
-	const UWorld* World = EditorCachedNotifyData.MeshComp ? EditorCachedNotifyData.MeshComp->GetWorld() : nullptr;
-	if(!World)
+	for(const auto& [CachedGuid, CachedNotifyData] : EditorCachedNotifyData)
 	{
-		return;
-	}
-	
-	if (UAnimationActorSubsystem* SubSys = World->GetSubsystem<UAnimationActorSubsystem>())
-	{
-		if(EditorCachedNotifyData.CachedDeterministicGuid.IsValid())
+		if (UAnimationActorSubsystem* SubSys = UAnimationActorSubsystem::Get(CachedNotifyData.MeshComp.Get()))
 		{
-			SubSys->DestroyAnimActor(EditorCachedNotifyData.CachedDeterministicGuid);
+			SubSys->DestroyAnimActor(CachedGuid);
 			if(AActor* SpawnedActor = SubSys->SpawnAnimActor(
 					GetSpawnableClassToLoad().LoadSynchronous(),
 					AttachTransform,
-					EditorCachedNotifyData.CachedDeterministicGuid))
+					CachedGuid))
 			{
 				PostSpawnActor(SpawnedActor,
 				   SubSys,
-				   EditorCachedNotifyData.MeshComp,
-				   EditorCachedNotifyData.Animation,
-				   EditorCachedNotifyData.TotalDuration,
-				   EditorCachedNotifyData.EventReference);
+				   CachedNotifyData.MeshComp.Get(),
+				   CachedNotifyData.Animation.Get(),
+				  CachedNotifyData.TotalDuration,
+				  CachedNotifyData.WeakEventReference.ToEventReference());
 			}
 		}
 	}

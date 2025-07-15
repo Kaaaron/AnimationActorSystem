@@ -18,7 +18,7 @@ class ANIMATIONACTORSYSTEM_API UAnimationActorSubsystem : public UWorldSubsystem
 {
 	GENERATED_BODY()
 public:
-	static UAnimationActorSubsystem* GetFromMesh(USkeletalMeshComponent* MeshComp);
+	static UAnimationActorSubsystem* Get(const UObject* WorldContext);
 	
 	AActor* SpawnAnimActor(const TSubclassOf<AActor>& Class, const FTransform& Transform, const FGuid Guid);
 	void DestroyAnimActor(const FGuid Guid);
@@ -30,8 +30,8 @@ public:
 #pragma endregion
 	
 private:
-	/** Spawned actors mapped as the GUID this system receives from the notify to an counter of actor pointers. */
-	TMap<FGuid, FActorCounter> SpawnedActors;
+	/** Spawned actors mapped as the GUID this system receives from the Notify to a counter of actor pointers. */
+	TMap<FGuid, AnimActorSys::FActorCounter> SpawnedActors;
 
 	/** List of referenced classes to hold onto, to prevent them from being GC'd */
 	UPROPERTY(Transient)

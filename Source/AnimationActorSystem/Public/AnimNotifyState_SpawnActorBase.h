@@ -4,7 +4,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AnimationActorSystem.h"
 #include "Animation/AnimNotifies/AnimNotifyState.h"
 #include "AnimationActorTypes.h"
 #include "AnimNotifyState_SpawnActorBase.generated.h"
@@ -47,7 +46,7 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="AnimActor")
 	FTransform AttachTransform = FTransform::Identity;
 	
-	virtual TSoftClassPtr<UObject> GetSpawnableClassToLoad() { return nullptr; };
+	virtual TSoftClassPtr<AActor> GetSpawnableClassToLoad() { return nullptr; };
 
 	virtual EAnimActorClassLoadingBehaviour GetLoadingBehaviour()
 		{ return EAnimActorClassLoadingBehaviour::FirstTimeRequested_Blocking; }
@@ -83,7 +82,7 @@ public:
 	};
 	
 #if WITH_EDITOR
-	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
 #pragma endregion
 
@@ -104,11 +103,22 @@ private:
 	 * when the Notify is already in progress. */
 	struct FCachedNotifyData
 	{
-		FGuid CachedDeterministicGuid = FGuid();
-		TObjectPtr<USkeletalMeshComponent> MeshComp = nullptr;
-		TObjectPtr<UAnimSequenceBase>Animation = nullptr;
+		FCachedNotifyData() = delete;
+		FCachedNotifyData(USkeletalMeshComponent* SourceMeshComp,
+			UAnimSequenceBase* SourceAnimation,
+			const float SourceTotalDuration,
+			const FAnimNotifyEventReference& SourceEventReference)
+			:MeshComp(SourceMeshComp),
+			Animation(SourceAnimation),
+			TotalDuration(SourceTotalDuration),
+			WeakEventReference(SourceEventReference)
+		{}
+		
+		TWeakObjectPtr<USkeletalMeshComponent> MeshComp = nullptr;
+		TWeakObjectPtr<UAnimSequenceBase> Animation = nullptr;
 		float TotalDuration = 0.f;
-		FAnimNotifyEventReference EventReference = FAnimNotifyEventReference();
-	} EditorCachedNotifyData;
+		AnimActorSys::FWeakAnimNotifyEventReference WeakEventReference;
+	};
+	TMap<FGuid, FCachedNotifyData> EditorCachedNotifyData;
 #endif
 };

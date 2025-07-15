@@ -5,4 +5,4 @@
 
 DEFINE_LOG_CATEGORY(LogAnimActorSys)
 	
-IMPLEMENT_MODULE(FAnimationActorSystemModule, AnimationActorSystemV2)
+IMPLEMENT_MODULE(FAnimationActorSystemModule, AnimationActorSystem)

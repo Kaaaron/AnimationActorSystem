@@ -33,12 +33,11 @@ void UAnimationActorSystemSettings::PostEditChangeProperty(FPropertyChangedEvent
 			const FString Message = FString(TEXT("Actor Class Loading Behaviour is not allowed to be BeginPlay_[...]. "
 						"Switching to corresponding FirstTimeRequested_[...] Value"));
 			UE_LOG(LogAnimActorSys, Error, TEXT("%s"), *Message)
-#if WITH_EDITOR
+
 			FSlateNotificationManager& SNM = FSlateNotificationManager::Get();
 			FNotificationInfo Notification = FNotificationInfo(FText::FromString(Message));
 			Notification.ExpireDuration = 5.f;
 			SNM.AddNotification(Notification);
-#endif
 			
 			switch (ActorClassLoadingBehaviour)
 			{
