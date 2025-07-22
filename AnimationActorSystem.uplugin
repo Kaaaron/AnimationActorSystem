@@ -1,7 +1,7 @@
 ﻿{
 	"FileVersion": 3,
 	"Version": 4,
-	"VersionName": "2.1.1",
+	"VersionName": "2.1.2",
 	"FriendlyName": "Animation Actor System",
 	"Description": "Spawn Actors and Meshes right from your inside animations!",
 	"Category": "Animation",
