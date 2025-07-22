@@ -30,6 +30,10 @@ void UAnimNotifyState_SpawnActorBase::NotifyBegin(USkeletalMeshComponent* MeshCo
 	{
 		return;
 	}
+	if (MeshComp->GetOwner()->ActorHasTag(UAnimationActorSubsystem::SpawnedAnimActorTag))
+	{
+		return;
+	}
 
 	const FGuid SpawnGuid = ConstructDeterministicGuidFromComponent(MeshComp);
 	
@@ -38,12 +42,15 @@ void UAnimNotifyState_SpawnActorBase::NotifyBegin(USkeletalMeshComponent* MeshCo
 	UAnimationActorSubsystem* SubSys = UAnimationActorSubsystem::Get(MeshComp);
 	const FAnimNotifyEvent* Notify = EventReference.GetNotify();
 	const UAnimInstance* AnimInst = MeshComp->GetAnimInstance();
-	if (SubSys && Notify && AnimInst && AnimInst->GetActiveMontageInstance())
+	const bool bIsEditorWorld = SubSys->GetWorld()->WorldType == EWorldType::Type::Editor
+				|| SubSys->GetWorld()->WorldType == EWorldType::Type::EditorPreview;
+	if (bIsEditorWorld && SubSys && Notify && AnimInst && AnimInst->GetActiveMontageInstance())
 	{
 		const float ActiveMontagePosition = AnimInst->GetActiveMontageInstance()->GetPosition();
 		const bool bPlayheadIsWithinNotifyWindow = ActiveMontagePosition <= Notify->GetEndTriggerTime() &&
 				ActiveMontagePosition >= Notify->GetTriggerTime();
-		if (bPlayheadIsWithinNotifyWindow && SubSys->GetAnimActorByGuid(SpawnGuid))
+		if (bPlayheadIsWithinNotifyWindow
+			&& SubSys->GetAnimActorByGuid(SpawnGuid))
 		{
 			/** For some reason Unreal Handles NotifyStates differently when scrubbing through an AnimSequence vs an AnimMontage.
 			 * For an AnimSequence, the NotifyState starts when entering the NotifyWindow, and ends when exiting the window, ticking inbetween.
@@ -80,23 +87,21 @@ void UAnimNotifyState_SpawnActorBase::NotifyBegin(USkeletalMeshComponent* MeshCo
 		TotalDuration,
 		WeakEventRef]
 		{
-			if (UAnimationActorSubsystem* SubSys = UAnimationActorSubsystem::Get(WeakMeshComp.Get()))
+			USkeletalMeshComponent* MeshComp_Local = WeakMeshComp.Get();
+			UAnimSequenceBase* Animation_Local = WeakAnimation.Get();
+			UAnimationActorSubsystem* SubSys_Local = UAnimationActorSubsystem::Get(MeshComp_Local);
+			if (!SpawnableClass || !MeshComp_Local || !Animation_Local || !SubSys_Local)
 			{
-				AActor* SpawnedActor = SubSys->SpawnAnimActor(SpawnableClass.Get(),
+				UE_LOG(LogAnimActorSys, Error, TEXT("Failed to spawn AnimActor (%s)."), SpawnableClass ? *SpawnableClass->GetName() : TEXT("InvalidClass"));
+				return;
+			}
+		
+			AActor* SpawnedActor = SubSys_Local->SpawnAnimActor(SpawnableClass.Get(),
 																NotifyAttachTransform,
 																SpawnGuid);
-				if(SpawnedActor // May still be nullptr, for example if the world is tearing down
-					&& WeakMeshComp.IsValid()
-					&& WeakAnimation.IsValid())
-				{
-					PostSpawnActor(SpawnedActor, SubSys, WeakMeshComp.Get(), WeakAnimation.Get(), TotalDuration, WeakEventRef.ToEventReference());
-					return;
-				}
-				UE_LOG(LogAnimActorSys, Error, TEXT("Failed to spawn AnimActor(%s)."), *SpawnableClass->GetName())
-				if(SpawnedActor)
-				{
-					SubSys->DestroyAnimActor(SpawnGuid);
-				}				
+			if(SpawnedActor /**May still be nullptr, for example if the world is tearing down*/)
+			{
+				PostSpawnActor(SpawnedActor, SubSys_Local, MeshComp_Local, Animation_Local, TotalDuration, WeakEventRef.ToEventReference());
 			}
 		};
 
@@ -133,7 +138,9 @@ void UAnimNotifyState_SpawnActorBase::NotifyEnd(USkeletalMeshComponent* MeshComp
 #if WITH_EDITOR
 		const FAnimNotifyEvent* Notify = EventReference.GetNotify();
 		const UAnimInstance* AnimInst = MeshComp->GetAnimInstance();
-		if (Notify && AnimInst && AnimInst->GetActiveMontageInstance())
+		const bool bIsEditorWorld = SubSys->GetWorld()->WorldType == EWorldType::Type::Editor
+					|| SubSys->GetWorld()->WorldType == EWorldType::Type::EditorPreview;
+		if (bIsEditorWorld && Notify && AnimInst && AnimInst->GetActiveMontageInstance())
 		{
 			const float ActiveMontagePosition = AnimInst->GetActiveMontageInstance()->GetPosition();
 			const bool bPlayheadIsWithinNotifyWindow = ActiveMontagePosition <= Notify->GetEndTriggerTime() &&
@@ -165,8 +172,8 @@ void UAnimNotifyState_SpawnActorBase::OnAnimNotifyCreatedInEditor(FAnimNotifyEve
 void UAnimNotifyState_SpawnActorBase::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
-
-	for(const auto& [CachedGuid, CachedNotifyData] : EditorCachedNotifyData)
+	const TMap<FGuid, FCachedNotifyData> EditorCachedNotifyData_Copy = EditorCachedNotifyData; // Copied to avoid modification during iteration
+	for(const auto& [CachedGuid, CachedNotifyData] : EditorCachedNotifyData_Copy)
 	{
 		if (UAnimationActorSubsystem* SubSys = UAnimationActorSubsystem::Get(CachedNotifyData.MeshComp.Get()))
 		{

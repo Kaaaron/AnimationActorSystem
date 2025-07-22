@@ -19,6 +19,9 @@ class ANIMATIONACTORSYSTEM_API UAnimationActorSubsystem : public UWorldSubsystem
 	GENERATED_BODY()
 public:
 	static UAnimationActorSubsystem* Get(const UObject* WorldContext);
+
+	/** A tag put on all spawned AnimActors to be able to identify them. */
+	static FName SpawnedAnimActorTag;
 	
 	AActor* SpawnAnimActor(const TSubclassOf<AActor>& Class, const FTransform& Transform, const FGuid Guid);
 	[[nodiscard]] AActor* GetAnimActorByGuid(const FGuid& GuidToLookFor) const;
