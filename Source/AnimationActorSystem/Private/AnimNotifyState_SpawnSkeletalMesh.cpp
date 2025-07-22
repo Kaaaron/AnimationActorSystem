@@ -68,7 +68,7 @@ void UAnimNotifyState_SpawnSkeletalMesh::NotifyTick(USkeletalMeshComponent* Mesh
 	const FAnimNotifyEventReference& EventReference)
 {
 	Super::NotifyTick(MeshComp, Animation, FrameDeltaTime, EventReference);
-	if (!(MeshComp&&Animation))
+	if (!MeshComp || !Animation)
 	{
 		return;
 	}
@@ -112,6 +112,7 @@ void UAnimNotifyState_SpawnSkeletalMesh::NotifyTick(USkeletalMeshComponent* Mesh
 				const float ElapsedTime = UAnimNotifyLibrary::GetCurrentAnimationNotifyStateTime(EventReference);
 				AnimActor->GetSkeletalMeshComponent()->GetSingleNodeInstance()->SetPosition(ElapsedTime);
 			}
+			return;
 		}
 	default:
 		{
