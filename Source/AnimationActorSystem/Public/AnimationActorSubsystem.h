@@ -21,6 +21,7 @@ public:
 	static UAnimationActorSubsystem* Get(const UObject* WorldContext);
 	
 	AActor* SpawnAnimActor(const TSubclassOf<AActor>& Class, const FTransform& Transform, const FGuid Guid);
+	[[nodiscard]] AActor* GetAnimActorByGuid(const FGuid& GuidToLookFor) const;
 	void DestroyAnimActor(const FGuid Guid);
 
 #pragma region UWorldSubsystem Interface

@@ -19,6 +19,15 @@ enum class EAnimActorClassLoadingBehaviour: uint8
 	FirstTimeRequested_Async	UMETA(DisplayName="First Time Requested (Asynchronous)")
 };
 
+/** How a skeletal mesh spawned by a notify state should animate/be animated. */
+UENUM(BlueprintType)
+enum class EAnimActorAnimationMode: uint8
+{
+	PoseLeader					UMETA(ToolTip="Use the mesh that plays the source animation as a Pose Leader component"),
+	AnimSequence				UMETA(ToolTip="Play an AnimSequence on the spawned mesh"),
+	AnimBlueprint				UMETA(ToolTip="Apply an AnimationBlueprint to the spawned mesh"),
+};
+
 namespace AnimActorSys
 {
 	/** Partial Data from FAnimNotifyEventReference but with TObjectPtr being switched to TWeakObjectPtr */
@@ -80,8 +89,11 @@ namespace AnimActorSys
 			return RV;
 		}
 
-		int GetCount() const
+		[[nodiscard]] int GetCount() const
 			 { return Counter; }
+
+		[[nodiscard]] AActor* GetActor() const
+			{ return Data.Get(); }
 		
 		explicit operator bool() const
 			{ return Counter > 0;}

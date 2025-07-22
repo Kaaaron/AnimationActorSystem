@@ -44,6 +44,15 @@ AActor* UAnimationActorSubsystem::SpawnAnimActor(const TSubclassOf<AActor>& Clas
 	
 }
 
+AActor* UAnimationActorSubsystem::GetAnimActorByGuid(const FGuid& GuidToLookFor) const
+{
+	if (const AnimActorSys::FActorCounter* Counter = SpawnedActors.Find(GuidToLookFor))
+	{
+		return Counter->GetActor();
+	}
+	return nullptr;
+}
+
 void UAnimationActorSubsystem::DestroyAnimActor(const FGuid Guid)
 {
 	if (AnimActorSys::FActorCounter* ActorCounter = SpawnedActors.Find(Guid))
