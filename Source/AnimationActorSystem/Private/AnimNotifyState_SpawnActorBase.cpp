@@ -16,7 +16,12 @@ void UAnimNotifyState_SpawnActorBase::NotifyBegin(USkeletalMeshComponent* MeshCo
                                                   const FAnimNotifyEventReference& EventReference)
 {
 	Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
-
+	
+	if (!(MeshComp && Animation))
+	{
+		return;
+	}
+	
 	const TSoftClassPtr<AActor> SpawnableClass = GetSpawnableClassToLoad();
 
 	if (!SpawnableClass)
@@ -30,7 +35,8 @@ void UAnimNotifyState_SpawnActorBase::NotifyBegin(USkeletalMeshComponent* MeshCo
 	{
 		return;
 	}
-	if (MeshComp->GetOwner()->ActorHasTag(UAnimationActorSubsystem::SpawnedAnimActorTag))
+	AActor* Owner = MeshComp->GetOwner();
+	if (Owner && Owner->ActorHasTag(UAnimationActorSubsystem::SpawnedAnimActorTag))
 	{
 		return;
 	}
