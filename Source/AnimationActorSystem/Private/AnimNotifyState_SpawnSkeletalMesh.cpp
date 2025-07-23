@@ -27,14 +27,7 @@ void UAnimNotifyState_SpawnSkeletalMesh::PostSpawnActor(AActor* SpawnedActor, UA
 			if(AnimationToPlay)
 			{
 				Comp->PlayAnimation(AnimationToPlay, bOverrideLoopBehaviour ? bLoopAnimation : AnimationToPlay->bLoop);
-#if WITH_EDITOR
-				if (Subsystem->GetWorld()->WorldType == EWorldType::Type::Editor
-					|| Subsystem->GetWorld()->WorldType == EWorldType::Type::EditorPreview)
-				{
-					// PlayRate in an Animation Editor is handled via the EditorOnly tick implementation of this NotifyState
-					Comp->SetPlayRate(0);
-				}
-#endif
+				Comp->SetPlayRate(0);
 				Comp->InitAnim(false);
 			}
 			break;
@@ -63,11 +56,11 @@ FString UAnimNotifyState_SpawnSkeletalMesh::GetNotifyName_Implementation() const
 	return BuildNotifyNameFromObject(MeshToSpawn);
 }
 
-#if WITH_EDITOR
 void UAnimNotifyState_SpawnSkeletalMesh::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float FrameDeltaTime,
 	const FAnimNotifyEventReference& EventReference)
 {
 	Super::NotifyTick(MeshComp, Animation, FrameDeltaTime, EventReference);
+	
 	if (!MeshComp || !Animation)
 	{
 		return;
@@ -78,11 +71,6 @@ void UAnimNotifyState_SpawnSkeletalMesh::NotifyTick(USkeletalMeshComponent* Mesh
 		{
 			if (const UAnimationActorSubsystem* Subsystem = UAnimationActorSubsystem::Get(MeshComp))
 			{
-				if (!(Subsystem->GetWorld()->WorldType == EWorldType::Type::Editor
-					|| Subsystem->GetWorld()->WorldType == EWorldType::Type::EditorPreview))
-				{
-					return;
-				}
 				ASkeletalMeshActor* AnimActor = Cast<ASkeletalMeshActor>(Subsystem->GetAnimActorByGuid(ConstructDeterministicGuidFromComponent(MeshComp)));
 				if (!AnimActor
 					|| !AnimActor->GetSkeletalMeshComponent()
@@ -90,16 +78,16 @@ void UAnimNotifyState_SpawnSkeletalMesh::NotifyTick(USkeletalMeshComponent* Mesh
 				{
 					return;
 				}
-
+#if WITH_EDITOR
 				// Handle case of being a preview for an AnimMontage
-				const FAnimNotifyEvent* Notify = EventReference.GetNotify();
-				const UAnimInstance* AnimInst = MeshComp->GetAnimInstance();
-				if (Notify && AnimInst && AnimInst->GetActiveMontageInstance())
+				const FAnimNotifyEvent* NotifyEvent = EventReference.GetNotify();
+				const UAnimInstance* AnimInstance = MeshComp->GetAnimInstance();
+				if (NotifyEvent && AnimInstance && AnimInstance->GetActiveMontageInstance())
 				{
-					const FAnimMontageInstance* ActiveMontage = AnimInst->GetActiveMontageInstance();
+					const FAnimMontageInstance* ActiveMontage = AnimInstance->GetActiveMontageInstance();
 					const float ActiveMontagePosition = ActiveMontage->GetPosition();
-					const float NotifyTriggerTime = Notify->GetTriggerTime();
-					const bool bPlayheadIsWithinNotifyWindow = ActiveMontagePosition <= Notify->GetEndTriggerTime() &&
+					const float NotifyTriggerTime = NotifyEvent->GetTriggerTime();
+					const bool bPlayheadIsWithinNotifyWindow = ActiveMontagePosition <= NotifyEvent->GetEndTriggerTime() &&
 							ActiveMontagePosition >= NotifyTriggerTime;
 					if (bPlayheadIsWithinNotifyWindow)
 					{
@@ -107,8 +95,11 @@ void UAnimNotifyState_SpawnSkeletalMesh::NotifyTick(USkeletalMeshComponent* Mesh
 						return;
 					}
 				}
+#endif
 
-				// Handle case of being a preview for an AnimSequence
+				// Keep playing animation in sync with the animation that spawned the actor.
+				// This is to prevent situations where the spawning actor has a separate time dilation set from the world
+				// from de-syncing the animation of this actor.
 				const float ElapsedTime = UAnimNotifyLibrary::GetCurrentAnimationNotifyStateTime(EventReference);
 				AnimActor->GetSkeletalMeshComponent()->GetSingleNodeInstance()->SetPosition(ElapsedTime);
 			}
@@ -120,4 +111,3 @@ void UAnimNotifyState_SpawnSkeletalMesh::NotifyTick(USkeletalMeshComponent* Mesh
 		}
 	}
 }
-#endif

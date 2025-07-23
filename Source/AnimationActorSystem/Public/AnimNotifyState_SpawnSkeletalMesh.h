@@ -84,10 +84,8 @@ public:
 
 #pragma region UAnimNotifyState Interface
 	virtual FString GetNotifyName_Implementation() const override;
-#if WITH_EDITOR
-	// Ticking only for editor visualization here
+
 	virtual void NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
 		float FrameDeltaTime, const FAnimNotifyEventReference& EventReference) override;
-#endif
 #pragma endregion
 };
