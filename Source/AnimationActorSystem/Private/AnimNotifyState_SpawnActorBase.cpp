@@ -7,6 +7,7 @@
 #include "AnimationActorSystem.h"
 #include "Animation/AnimNotifyLibrary.h"
 #include "Animation/MirrorDataTable.h"
+#include "Animation/AnimSequenceBase.h"
 #include "Engine/AssetManager.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/StreamableManager.h"
