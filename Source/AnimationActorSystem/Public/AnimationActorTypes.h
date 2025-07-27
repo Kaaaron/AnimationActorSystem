@@ -36,8 +36,7 @@ namespace AnimActorSys
 		explicit FWeakAnimNotifyEventReference(const FAnimNotifyEventReference& SourceEventReference)
 			:MirrorTable(SourceEventReference.GetMirrorDataTable()),
 			NotifySource(SourceEventReference.GetSourceObject()),
-			CurrentAnimTime(SourceEventReference.GetCurrentAnimationTime()),
-			bActiveContext(SourceEventReference.IsActiveContext())
+			CurrentAnimTime(SourceEventReference.GetCurrentAnimationTime())
 		{}
 
 		/** Converts to a reconstructed version of the original EventReference used to construct this one,
@@ -55,9 +54,6 @@ namespace AnimActorSys
 
 		/** The recorded time from the tick record that this notify event was fired at */
 		float CurrentAnimTime = 0.0f;
-
-		/** Whether the context this notify was fired from is active or not (active == not blending out). */
-		bool bActiveContext = false;
 	};
 
 	/**
