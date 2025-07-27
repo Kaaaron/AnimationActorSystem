@@ -45,32 +45,34 @@ void UAnimNotifyState_SpawnActorBase::NotifyBegin(USkeletalMeshComponent* MeshCo
 	
 #pragma region EditorOnlyPreview
 #if WITH_EDITOR
-	UAnimationActorSubsystem* SubSys = UAnimationActorSubsystem::Get(MeshComp);
-	const FAnimNotifyEvent* Notify = EventReference.GetNotify();
-	const UAnimInstance* AnimInst = MeshComp->GetAnimInstance();
-	const bool bIsEditorWorld = SubSys->GetWorld()->WorldType == EWorldType::Type::Editor
-				|| SubSys->GetWorld()->WorldType == EWorldType::Type::EditorPreview;
-	if (bIsEditorWorld && SubSys && Notify && AnimInst && AnimInst->GetActiveMontageInstance())
+	if (UAnimationActorSubsystem* SubSys = UAnimationActorSubsystem::Get(MeshComp))
 	{
-		const float ActiveMontagePosition = AnimInst->GetActiveMontageInstance()->GetPosition();
-		const bool bPlayheadIsWithinNotifyWindow = ActiveMontagePosition <= Notify->GetEndTriggerTime() &&
-				ActiveMontagePosition >= Notify->GetTriggerTime();
-		if (bPlayheadIsWithinNotifyWindow
-			&& SubSys->GetAnimActorByGuid(SpawnGuid))
+		const FAnimNotifyEvent* Notify = EventReference.GetNotify();
+		const UAnimInstance* AnimInst = MeshComp->GetAnimInstance();
+		const bool bIsEditorWorld = SubSys->GetWorld()->WorldType == EWorldType::Type::Editor
+					|| SubSys->GetWorld()->WorldType == EWorldType::Type::EditorPreview;
+		if (bIsEditorWorld && Notify && AnimInst && AnimInst->GetActiveMontageInstance())
 		{
-			/** For some reason Unreal Handles NotifyStates differently when scrubbing through an AnimSequence vs an AnimMontage.
-			 * For an AnimSequence, the NotifyState starts when entering the NotifyWindow, and ends when exiting the window, ticking inbetween.
-			 * For AnimMontages though, Unreal will repeatedly fire a Start=>Tick=>End Pattern during scrubbing, and not do anything
-			 * while within the NotifyWindow if not actively scrubbing.
-			 * So instead of spawning a new AnimActor here in the Montage Case, we simply return if we already spawned one.
-			 * This should hack around the described issue and may even save performance in-editor when trying to spawn particularly heavy
-			 * meshes/actors from these states.
-			 */
-			return;
-		}
-		if (!bPlayheadIsWithinNotifyWindow)
-		{
-			return;
+			const float ActiveMontagePosition = AnimInst->GetActiveMontageInstance()->GetPosition();
+			const bool bPlayheadIsWithinNotifyWindow = ActiveMontagePosition <= Notify->GetEndTriggerTime() &&
+					ActiveMontagePosition >= Notify->GetTriggerTime();
+			if (bPlayheadIsWithinNotifyWindow
+				&& SubSys->GetAnimActorByGuid(SpawnGuid))
+			{
+				/** For some reason Unreal Handles NotifyStates differently when scrubbing through an AnimSequence vs an AnimMontage.
+				 * For an AnimSequence, the NotifyState starts when entering the NotifyWindow, and ends when exiting the window, ticking inbetween.
+				 * For AnimMontages though, Unreal will repeatedly fire a Start=>Tick=>End Pattern during scrubbing, and not do anything
+				 * while within the NotifyWindow if not actively scrubbing.
+				 * So instead of spawning a new AnimActor here in the Montage Case, we simply return if we already spawned one.
+				 * This should hack around the described issue and may even save performance in-editor when trying to spawn particularly heavy
+				 * meshes/actors from these states.
+				 */
+				return;
+			}
+			if (!bPlayheadIsWithinNotifyWindow)
+			{
+				return;
+			}
 		}
 	}
 #endif
