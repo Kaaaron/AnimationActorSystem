@@ -33,31 +33,46 @@ public:
 	/** The skeletal mesh to spawn for the duration of this notify */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="AnimActor")
 	TObjectPtr<USkeletalMesh> MeshToSpawn = nullptr;
-
-	/** The animation that should play on the notifies spawned skeletal mesh */
+	
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="AnimActor")
+	EAnimActorAnimationMode AnimationMode = EAnimActorAnimationMode::AnimSequence;
+
+#pragma region EAnimActorAnimationMode::AnimSequence 
+	/** The animation that should play on the notifies spawned skeletal mesh */
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="AnimActor", meta=(EditConditionHides,
+		EditCondition="AnimationMode == EAnimActorAnimationMode::AnimSequence"))
 	TObjectPtr<UAnimSequenceBase> AnimationToPlay = nullptr;
 
 	/** Whether to specify a loop behaviour for the animation.
 	 * If false, will use the loop setting from the animation.*/
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(InlineEditConditionToggle), Category="AnimActor")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(EditConditionHides,
+		EditCondition="AnimationMode == EAnimActorAnimationMode::AnimSequence"), Category="AnimActor")
 	bool bOverrideLoopBehaviour = false;
 
 	/** The override value for whether to loop the animation. */
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(EditCondition="bOverrideLoopBehaviour"), Category="AnimActor")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(EditConditionHides,
+		EditCondition="bOverrideLoopBehaviour && AnimationMode == EAnimActorAnimationMode::AnimSequence"), Category="AnimActor")
 	bool bLoopAnimation = false;
+#pragma endregion
+
+#pragma region EAnimActorAnimationMode::AnimBlueprint
+	/** The animation that should play on the notifies spawned skeletal mesh */
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="AnimActor", meta=(EditConditionHides,
+		EditCondition="AnimationMode == EAnimActorAnimationMode::AnimBlueprint"))
+	TSubclassOf<UAnimInstance> AnimationBlueprint = nullptr;
+#pragma endregion
 
 	/** Whether to override the skeletal mesh's collision profile */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="AnimActor")
 	bool bOverrideCollisionProfile = false;
 
 	/** Override for the skeletal mesh's collision profile */
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(EditCondition="bOverrideCollisionProfile"), Category="AnimActor")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(EditCondition="bOverrideCollisionProfile", EditConditionHides), Category="AnimActor")
 	FCollisionProfileName CollisionProfileOverride = FCollisionProfileName();
 
 #pragma region UAnimNotifyState_SpawnActorBase Interface
 	virtual TSoftClassPtr<AActor> GetSpawnableClassToLoad() override
-		{ return ASkeletalMeshActor::StaticClass(); };
+		{ return UAnimationActorSystemSettings::Get()->SkeletalMeshActorClass; };
 	
 	virtual EAnimActorClassLoadingBehaviour GetLoadingBehaviour() override
 		{ return UAnimationActorSystemSettings::Get()->SkeletalMeshActorLoadingBehaviour; };
@@ -69,5 +84,8 @@ public:
 
 #pragma region UAnimNotifyState Interface
 	virtual FString GetNotifyName_Implementation() const override;
+
+	virtual void NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
+		float FrameDeltaTime, const FAnimNotifyEventReference& EventReference) override;
 #pragma endregion
 };

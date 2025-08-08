@@ -10,6 +10,8 @@
 #include "Engine/StreamableManager.h"
 #include "Engine/World.h"
 
+FName UAnimationActorSubsystem::SpawnedAnimActorTag = FName(TEXT("AnimActor"));
+
 AActor* UAnimationActorSubsystem::SpawnAnimActor(const TSubclassOf<AActor>& Class, const FTransform& Transform,
                                                  const FGuid Guid)
 {	
@@ -40,8 +42,18 @@ AActor* UAnimationActorSubsystem::SpawnAnimActor(const TSubclassOf<AActor>& Clas
 	Params.ObjectFlags = Params.ObjectFlags & RF_Transient;
 	AActor* SpawnedActor = World->SpawnActor(Class, &Transform, Params);
 	SpawnedActors.Emplace(Guid, AnimActorSys::FActorCounter(SpawnedActor)).Increment();
+	SpawnedActor->Tags.AddUnique(SpawnedAnimActorTag);
 	return SpawnedActor;
 	
+}
+
+AActor* UAnimationActorSubsystem::GetAnimActorByGuid(const FGuid& GuidToLookFor) const
+{
+	if (const AnimActorSys::FActorCounter* Counter = SpawnedActors.Find(GuidToLookFor))
+	{
+		return Counter->GetActor();
+	}
+	return nullptr;
 }
 
 void UAnimationActorSubsystem::DestroyAnimActor(const FGuid Guid)
