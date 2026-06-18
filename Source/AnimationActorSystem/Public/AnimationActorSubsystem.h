@@ -13,7 +13,7 @@ class UWorld;
 /**
  * Subsystem to manage spawning, tracking, and destroying AnimActors.
  */
-UCLASS()
+UCLASS(Transient)
 class ANIMATIONACTORSYSTEM_API UAnimationActorSubsystem : public UWorldSubsystem
 {
 	GENERATED_BODY()
@@ -30,6 +30,7 @@ public:
 #pragma region UWorldSubsystem Interface
 	virtual void OnWorldBeginPlay(UWorld& InWorld) override;
 	
+protected:
 	virtual bool DoesSupportWorldType(const EWorldType::Type WorldType) const override;
 #pragma endregion
 	
