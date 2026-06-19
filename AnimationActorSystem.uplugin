@@ -1,13 +1,13 @@
 ﻿{
 	"FileVersion": 3,
-	"Version": 4,
-	"VersionName": "2.1.2",
+	"Version": 5,
+	"VersionName": "2.1.3",
 	"FriendlyName": "Animation Actor System",
 	"Description": "Spawn Actors and Meshes right from your inside animations!",
 	"Category": "Animation",
 	"CreatedBy": "Aaron Kemner",
 	"CreatedByURL": "https://www.aaronkemner.com/",
-	"DocsURL": "",
+	"DocsURL": "https://github.com/Kaaaron/AnimationActorSystem/wiki",
 	"CanContainContent": false,
 	"Modules": [
 		{
