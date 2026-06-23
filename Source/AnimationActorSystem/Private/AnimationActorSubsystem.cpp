@@ -15,6 +15,12 @@ FName UAnimationActorSubsystem::SpawnedAnimActorTag = FName(TEXT("AnimActor"));
 AActor* UAnimationActorSubsystem::SpawnAnimActor(const TSubclassOf<AActor>& Class, const FTransform& Transform,
                                                  const FGuid Guid)
 {	
+	if (GIsCookerLoadingPackage || IsRunningCookCommandlet())
+	{
+		UE_LOG(LogAnimActorSys, Display, TEXT("Tried to spawn actor during cook. Skipping."))
+		return nullptr;
+	}
+	
 	if (!Class)
 	{
 		return nullptr;
@@ -41,6 +47,7 @@ AActor* UAnimationActorSubsystem::SpawnAnimActor(const TSubclassOf<AActor>& Clas
 	FActorSpawnParameters Params = FActorSpawnParameters();
 	Params.ObjectFlags = Params.ObjectFlags & RF_Transient;
 	AActor* SpawnedActor = World->SpawnActor(Class, &Transform, Params);
+	check(SpawnedActor)
 	SpawnedActors.Emplace(Guid, AnimActorSys::FActorCounter(SpawnedActor)).Increment();
 	SpawnedActor->Tags.AddUnique(SpawnedAnimActorTag);
 	return SpawnedActor;
