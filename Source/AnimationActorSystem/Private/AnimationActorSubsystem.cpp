@@ -46,12 +46,13 @@ AActor* UAnimationActorSubsystem::SpawnAnimActor(const TSubclassOf<AActor>& Clas
 	
 	FActorSpawnParameters Params = FActorSpawnParameters();
 	Params.ObjectFlags = Params.ObjectFlags & RF_Transient;
-	AActor* SpawnedActor = World->SpawnActor(Class, &Transform, Params);
-	check(SpawnedActor)
-	SpawnedActors.Emplace(Guid, AnimActorSys::FActorCounter(SpawnedActor)).Increment();
-	SpawnedActor->Tags.AddUnique(SpawnedAnimActorTag);
-	return SpawnedActor;
-	
+	if (AActor* SpawnedActor = World->SpawnActor(Class, &Transform, Params))
+	{
+		SpawnedActors.Emplace(Guid, AnimActorSys::FActorCounter(SpawnedActor)).Increment();
+		SpawnedActor->Tags.AddUnique(SpawnedAnimActorTag);
+		return SpawnedActor;
+	}
+	return nullptr;
 }
 
 AActor* UAnimationActorSubsystem::GetAnimActorByGuid(const FGuid& GuidToLookFor) const
